@@ -71,8 +71,7 @@ end
 V_sim = 1;      % [mL] simulation volume
 
 % Every simulation volume consists of different fractions [f_i]
-global f_liquid  
-global f_solid  
+global f_liquid  f_solid  
 f_liquid = 0.2;                  % [0,1] liquid fraction of volume (sinusoids & Space of Disse)
 f_solid  = 0.7;                  % [0,1] solid fraction of volume (hepatocytes)
 f_rest   = 1-f_liquid-f_solid;   % [0,1] volume fraction not in solid and liquid 
@@ -105,11 +104,9 @@ for k = 2:length(t_data)
     f_data(:,k) = mv_dxdt(t_data(k-1), c_data(:, k-1));   % [mmol/s/l]
 
     % glucose in fluid
-    c_data(1,k) = c_data(1, k-1) + DTC *f_data(1,k);       % [mmol/l]
-    
+    c_data(1,k) = c_data(1, k-1) + DTC *f_data(1,k);       % [mmol/l]  
     % glycogen in solid
     c_data(2,k) = c_data(2, k-1) + DTC *f_data(2,k);       % [mmol/l]
-    
     % lactate in fluid
     c_data(3,k) = c_data(3, k-1) + DTC *f_data(3,k);       % [mmol/l]
 end

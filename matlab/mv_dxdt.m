@@ -8,10 +8,10 @@ function [dxdt] = mv_dxdt(t, x);
 %   c                   vector of concentrations
 
 % Units
-%   time: minutes     [min] ,  
+%   time: seconds     [sec] ,  
 %   concentration     [mM] = [mmol/l] 
-%   volume:           [l]
-%   dxdt:             [mmol/l/s]
+%   volume:           [litre]
+%   dxdt:             [mmol/s/litre]
 %
 %   author: Matthias Koenig 
 %           Charite Berlin

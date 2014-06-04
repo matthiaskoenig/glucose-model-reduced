@@ -1,5 +1,5 @@
 function [] = timecourse_sim()
-% Perform the timecourse simulation for the 1 Meal and 3 Meal simulation
+% Plotting the timecourse information
 clc, format compact, clear all, close all
 addpath('../glucose-profiles/')
 
@@ -26,7 +26,8 @@ ylabel('glucose [mmol/L]')
 title('3 Meals')
 axis square
 
-
+% Perform the timecourse simulation for the 1 Meal and 3 Meal simulation
+% TODO:
 % perform simulations with the data as input data
 % how is the data used as input?
 

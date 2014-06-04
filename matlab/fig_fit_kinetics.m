@@ -1,15 +1,15 @@
-% Plot the fit kinetics of the reduced glucose model;
+% Plot of the fitted kinetics of the reduced glucose model;
 %
 % Matthias Koenig (matthias.koenig[AT]charite.de)
 % 2013-06-04
 
-
 close all
 clear all
-fprintf('Reduced Glucose Model Response\n')
-Vf = 1;  % Volume factor
+fprintf('Reduced Glucose Model Response\n');
+global f_solid
+f_solid = 1.0;
 
-f = fit_kinetics(Vf);
+f = fit_kinetics();
 x1 = 0:0.5:12;   % glc_ext
 x2 = 0:10:500;   % glycogen
 x3 = 0:0.1:4;    % lac_ext
