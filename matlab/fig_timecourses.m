@@ -10,7 +10,7 @@ tcs = {timecourse_1meal(), timecourse_3meals(), timecourse_sinus()};
 names = {'1 Meal', '3 Meals', 'Sinus'}
 
 disp('*** Plot data ***')
-time = linspace(0,48,200);
+time = linspace(0,48, 5000);
 fig1 = figure('Name' , 'Timecourses', 'Color', [1 1 1]);
 
 % glc

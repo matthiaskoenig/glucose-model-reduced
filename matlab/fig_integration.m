@@ -1,6 +1,6 @@
 function [y] = fig_integration(t, f, c, ftext)
 % plot details about the solution
-figure('Name', ftext, 'Color', [1 1 1], 'OuterPosition', [0 0 1200 800])
+fig1 = figure('Name', ftext, 'Color', [1 1 1], 'OuterPosition', [0 0 1200 800])
 t_unit = 'min'
 switch t_unit
     case 's'
@@ -52,3 +52,6 @@ for k=1:Nc
     ylabel('v [mM/s]')
 end
 
+% save the figure
+fig_name = strcat('../results/', ftext, '.png')
+print(fig1, fig_name, '-dpng')

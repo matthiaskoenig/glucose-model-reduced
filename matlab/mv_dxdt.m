@@ -46,13 +46,6 @@ dxdt(1) = -1 * hgu/f_liquid;   % [mmol/s/L]
 dxdt(2) = +1 * gs/f_solid;     % [mmol/s/L]                  
 dxdt(3) = +2 * gly/f_liquid;   % [mmol/s/L]
 
-% for numerical stability if given timecourse
-% if (strcmp(modus, '1meal') || strcmp(modus, '3meals') || strcmp(modus, 'sinus'))
-%    dxdt(1) = 0;
-%    dxdt(3) = 0;
-% end
-
-
 % test with constant glucose and lactate concentrations (liquid)
 %dxdt(1) = 0;                
 %dxdt(3) = 0;

@@ -6,12 +6,7 @@ function [t_data, f_data, c_data] = mv_solve_ode(modus_index)
 % @author: Matthias Koenig (matthias.koenig[AT]charite.de)
 % @date:   2014-06-04
 
-% TODO: where comes the simulation volume into play?
-
-% For simulation of glucose timecourses 1meal and 3meals
-% timecourse information is used
 global modus tc
-
 modus_sel = {'stationary', '1meal', '3meals', 'sinus'};
 if (nargin == 0)
     modus = modus_sel(1);
@@ -49,10 +44,9 @@ end
 
 
 %% Integration
-DT = 60*60*60;                  % [s] endtime simulation (DT)
-options = odeset('AbsTol', 1E-3, 'RelTol', 1E-3, 'MaxStep', 1);
-[t_data, c_data] = ode15s(@mv_dxdt, [0 DT], c_init, options);
-options
+DT = 60*3600;                  % [s] endtime simulation (DT)
+options = odeset('AbsTol', 1E-6, 'RelTol', 1E-6);
+[t_data, c_data] = ode15s(@mv_dxdt, [0:60:DT], c_init, options);
 c_data = c_data';
 f_data = zeros(size(c_data)); 
 
@@ -70,7 +64,6 @@ end
 % glycogen per volume
 c_data(4,:) = c_data(2,:)*f_solid;  % [mM] glycogen concentration in reference volume [0, 500]
 
-
 % !!! IMPORTANT FOR SIMULATION VOLUMES !!!
 % All results are for reference Volume of 1 litre. 
 % f_data [mmole/L/s]
@@ -80,7 +73,14 @@ c_data(4,:) = c_data(2,:)*f_solid;  % [mM] glycogen concentration in reference v
 % f_data*Vsim [mmole/s] in Vsim
 % c_data*Vsim [mmole]   in Vsim
 
+%% store the results
+headers = {'time', 'glc', 'gly', 'lac', 'gly_vol', 'f_glc', 'f_gly', 'f_lac'} 
+res =[t_data, c_data', f_data'];
+fname = strcat('../results/', modus, '.csv')
+csvwrite_with_headers(fname{1}, res, headers);
+
 %% plot the results
-fig_integration(t_data, f_data, c_data, 'MV9 Matlab ODE');
+fig_name = strcat('MV9_Matlab_ODE-', modus)
+fig_integration(t_data, f_data, c_data, fig_name{1});
 
 end

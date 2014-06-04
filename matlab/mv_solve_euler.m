@@ -1,4 +1,4 @@
-function [t_data, f_data, c_data] = mv_solve_euler()
+function [t_data, f_data, c_data] = mv_solve_euler(modus_index)
 %  mv_solve_euler : Solves the reduced model in Matlab with Euler method.
 %
 %  Model v8 : Reduced Model of Hepatic Glucose Metabolism 
@@ -53,11 +53,14 @@ function [t_data, f_data, c_data] = mv_solve_euler()
 %           behavior
 % -------------------------------------------------------------------------
 
+disp('EULER NOT UPDATED - USE THE ODE IMPLENTATION')
+return
+
 % endtime and timesteps (DT and DTC)
 % time steps change the accuracy of the solver, but should not change
 % the solutions as long as DCT is small compared to the kinetics
 format compact; clear all
-DT = 0.2*60*60;           % [s] endtime
+DT = 2*3600;             % [s] endtime
 DTC = 1;                  % [s] size of time steps
 
 t_data = zeros(1, DT/DTC+1); 
@@ -65,39 +68,54 @@ for k = 2:length(t_data)
     t_data(1,k) = t_data(1,k-1) + DTC;
 end
 
-% Simulation Volume in [ml]
-% V_sim = 1500; % [ml] total human liver volume
-% V_sim = 0.9;  % [ml] total mouse liver volume
-V_sim = 1;      % [mL] simulation volume
+global modus tc
+modus_sel = {'stationary', '1meal', '3meals', 'sinus'};
+if (nargin == 0)
+    modus = modus_sel(1);
+else
+   modus = modus_sel(modus_index); 
+end
+if (strcmp(modus, '1meal'))
+    tc = timecourse_1meal();
+elseif (strcmp(modus, '3meals'))
+    tc = timecourse_3meals();
+elseif (strcmp(modus, 'sinus'))
+    tc = timecourse_sinus();
+end
+disp(modus)
 
-% Every simulation volume consists of different fractions [f_i]
 global f_liquid  f_solid  
 f_liquid = 0.2;                  % [0,1] liquid fraction of volume (sinusoids & Space of Disse)
 f_solid  = 0.7;                  % [0,1] solid fraction of volume (hepatocytes)
-f_rest   = 1-f_liquid-f_solid;   % [0,1] volume fraction not in solid and liquid 
 
-% Every simulation volume has a maximum glycogen density (capacity)
-% calculated from human model and in line with rat/mouse: 500mmmol/L -> 90mg/gLW -> 90mg/[ml_Vsim]
-% The storage capacity is fully in the solid phase;
 C_glyc = 500;                    % [mmol/L] (90 mg/ml) glycogen storage density 
 C_glyc_solid = C_glyc/f_solid;   % [mmol/L] glycogen storage density in solid 
 
-% storage of timepoints, concentrations and fluxes (F)
-NC = 3;  % number of concentrations
+% stationary initial conditions
+c_init = [
+                9                 % glc_ext   C1 [mmol/L]
+                0.5*C_glyc_solid  % glyc      C2 [mmol/L]
+                4                 % lac_ext   C3 [mmol/L] 
+];
+% Set initial concentrations from profile
+if (strcmp(modus, '1meal') || strcmp(modus, '3meals') || strcmp(modus, 'sinus'))
+    [glc, lac] = f_timecourse(0/3600, tc);
+    c_init(1,:) = glc;  % [mM]
+    c_init(3,:) = lac;  % [mM]
+end
+
 
 % initial conditions of simulation volume
+NC = 3;  % number of concentrations
 c_data = zeros(NC, length(t_data));
 f_data = zeros(NC, length(t_data));
 t_data(1,1) = 0;
-c_data(:,1) = [
-                9                  % [mmol/L]  glc_ext   C1
-                0.5*C_glyc_solid   % [mmol/L]  glyc      C2  (half-filled glycogen stores solid phase)
-                4                  % [mmol/L]  lac_ext   C3       
-];
+c_data(:,1) = c_init;
 
 %% Integration Euler
 display('-----------------')
 display('Time Matlab Euler')
+
 tic
 for k = 2:length(t_data)
     % get fluxes and concentrations for next time point
@@ -112,12 +130,22 @@ for k = 2:length(t_data)
 end
 toc
 
-%% Calculate additional data
-c_data(4,:) = c_data(2,:)*f_solid;            % Glycogen concentration in simulation volume [0, 500]
-c_data(5,:) = c_data(2,:)*f_solid*V_sim/1000; % [mmol] glycogen in simulation volume
+% Set the concentrations from profile
+if (strcmp(modus, '1meal') || strcmp(modus, '3meals') || strcmp(modus, 'sinus'))
+    [glc, lac] = f_timecourse(t_data/3600, tc);
+    c_data(1,:) = glc;    % [mM]
+    c_data(3,:) = lac;    % [mM]
+end
+
+% Calculate the fluxes [mmol/l/s]
+for k = 1:length(t_data)
+    f_data(:,k) = mv_dxdt(t_data(k), c_data(:,k));
+end
+% glycogen per volume
+c_data(4,:) = c_data(2,:)*f_solid;  % [mM] glycogen concentration in reference volume [0, 500]
 
 % plot the results
-fig_mv(t_data, f_data, c_data, 'MV8 Matlab Euler');
-
+fig_name = strcat('MV9_Matlab_Euler-', modus)
+fig_integration(t_data, f_data, c_data, fig_name{1});
 
 return
