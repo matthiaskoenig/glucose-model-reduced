@@ -1,4 +1,4 @@
-function [dxdt] = mv_dxdt(t, x);
+function [dxdt] = mv_dxdt(t, x)
 %% mv_dxdt : ODE rate laws for model
 %  Definition of the rate laws and calculation of the fluxes for the given
 %  parameters and concentrations. This function is called by the ODE
@@ -17,18 +17,19 @@ function [dxdt] = mv_dxdt(t, x);
 %           Charite Berlin
 %           Computational Systems Biochemistry Berlin
 %           matthias.koenig@charite.de
-%   date:   2013-07-18
+%   date:   2014-06-04
 
-%% Concentrations
 global f_liquid
 global f_solid
 f = fit_kinetics();
 
 % hard coded time profiles
 global modus tc
-if (strcmp(modus, '1meal') || strcmp(modus, '3meals'))
-    x(1) = f_meal(t/3600, tc); % [mM]
-    x(3) = 3; % [mM]
+% Set the concentrations from profile
+if (strcmp(modus, '1meal') || strcmp(modus, '3meals') || strcmp(modus, 'sinus'))
+    [glc, lac] = f_timecourse(t/3600, tc);
+    x(1) = glc;    % [mM]
+    x(3) = lac;    % [mM]
 end
 
 % glc_ext (x1), glyc (x2), lac_ext (x3)
@@ -44,6 +45,13 @@ dxdt = zeros(size(x));
 dxdt(1) = -1 * hgu/f_liquid;   % [mmol/s/L] 
 dxdt(2) = +1 * gs/f_solid;     % [mmol/s/L]                  
 dxdt(3) = +2 * gly/f_liquid;   % [mmol/s/L]
+
+% for numerical stability if given timecourse
+% if (strcmp(modus, '1meal') || strcmp(modus, '3meals') || strcmp(modus, 'sinus'))
+%    dxdt(1) = 0;
+%    dxdt(3) = 0;
+% end
+
 
 % test with constant glucose and lactate concentrations (liquid)
 %dxdt(1) = 0;                

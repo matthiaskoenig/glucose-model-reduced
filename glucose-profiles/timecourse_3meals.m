@@ -1,4 +1,4 @@
-function [tc] = timecourse_1meal()
+function [tc] = timecourse_3meals()
 data = [
 0	5
 0.55468	4.891391111
@@ -37,4 +37,5 @@ data = [
 ];
 tc.time = data(:,1);
 tc.glc = data(:,2);
+tc.lac = 3.0 * ones(size(tc.time));
 end

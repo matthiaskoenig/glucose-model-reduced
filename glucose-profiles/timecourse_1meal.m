@@ -37,4 +37,5 @@ data = [
 ];
 tc.time = data(:,1);
 tc.glc = data(:,2);
+tc.lac = 3.0 * ones(size(tc.time));
 end

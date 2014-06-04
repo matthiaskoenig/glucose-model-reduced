@@ -1,4 +1,4 @@
-function [y] = fig_mv7(t, f, c, ftext)
+function [y] = fig_integration(t, f, c, ftext)
 % plot details about the solution
 figure('Name', ftext, 'Color', [1 1 1], 'OuterPosition', [0 0 1200 800])
 t_unit = 'min'
@@ -33,8 +33,6 @@ end
 % plot the additional concentrations in the plot
 subplot(2,3,2)
 plot(t, c(4,:), 'k-'), hold on; 
-plot(t, c(5,:), 'r-'), hold on;
-
 
 % plot the fdata
 for k=1:Nc
