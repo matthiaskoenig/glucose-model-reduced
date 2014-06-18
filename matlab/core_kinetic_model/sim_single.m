@@ -44,7 +44,9 @@ func2str(dydt_fun)
 
 % Integration (relative and absolute tolerances controlled to be 
 % sure about the numerical values.
+tic
 [t,c] = ode15s(dydt_fun, tspan , x0, odeset('RelTol', 1e-9, 'AbsTol', 1e-9));
+toc
 
 % Calculate fluxes from the ODE system
 [~, vtmp, ~] = dydt_fun(0, x0);   % get the flux names
@@ -77,4 +79,4 @@ switch (name)
 end
 
 %% Create figure
-fig_single(t, c, v);
+% fig_single(t, c, v);

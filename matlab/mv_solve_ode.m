@@ -45,8 +45,14 @@ end
 
 %% Integration
 DT = 60*3600;                  % [s] endtime simulation (DT)
+                 
 options = odeset('AbsTol', 1E-6, 'RelTol', 1E-6);
 [t_data, c_data] = ode15s(@mv_dxdt, [0:60:DT], c_init, options);
+
+% tic
+% [t,c] = ode15s(@mv_dxdt, [0, 2000], c_init, odeset('RelTol', 1e-9, 'AbsTol', 1e-9));
+% toc
+
 c_data = c_data';
 f_data = zeros(size(c_data)); 
 
