@@ -19,8 +19,7 @@ function [dxdt] = mv_dxdt(t, x)
 %           matthias.koenig@charite.de
 %   date:   2014-06-04
 
-global f_liquid
-global f_solid
+global f_liquid f_solid V_sim
 f = fit_kinetics();
 
 % hard coded time profiles
@@ -41,10 +40,12 @@ gs = f.gs(x(1), x(2), x(3));
 % hgu, gs, gly are [mmol/s/L] simulation Volume
 % the changes in the liquid and solid volumes are calculated with the 
 % respective fractions
+V_ref = 1.0;                % [l] reference volume 
 dxdt = zeros(size(x));
-dxdt(1) = -1 * hgu/f_liquid;   % [mmol/s/L] 
-dxdt(2) = +1 * gs/f_solid;     % [mmol/s/L]                  
-dxdt(3) = +2 * gly/f_liquid;   % [mmol/s/L]
+dxdt(1) = -1 * hgu/f_liquid * V_sim/V_ref;   % [mmol/s/L] 
+dxdt(2) = +1 * gs/f_solid   * V_sim/V_ref;   % [mmol/s/L]                  
+dxdt(3) = +2 * gly/f_liquid * V_sim/V_ref;   % [mmol/s/L]
+
 
 % test with constant glucose and lactate concentrations (liquid)
 %dxdt(1) = 0;                

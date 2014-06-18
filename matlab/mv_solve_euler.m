@@ -1,7 +1,7 @@
 function [t_data, f_data, c_data] = mv_solve_euler(modus_index)
 %  mv_solve_euler : Solves the reduced model in Matlab with Euler method.
 %
-%  Model v8 : Reduced Model of Hepatic Glucose Metabolism 
+%  Model : Reduced Model of Hepatic Glucose Metabolism 
 %  @author: Matthias Koenig (matthias.koenig[AT]charite.de)
 %  @date:   2013-07-18
 %
@@ -53,21 +53,9 @@ function [t_data, f_data, c_data] = mv_solve_euler(modus_index)
 %           behavior
 % -------------------------------------------------------------------------
 
-disp('EULER NOT UPDATED - USE THE ODE IMPLENTATION')
-return
+VERSION = 11;
 
-% endtime and timesteps (DT and DTC)
-% time steps change the accuracy of the solver, but should not change
-% the solutions as long as DCT is small compared to the kinetics
-format compact; clear all
-DT = 2*3600;             % [s] endtime
-DTC = 1;                  % [s] size of time steps
-
-t_data = zeros(1, DT/DTC+1); 
-for k = 2:length(t_data)
-    t_data(1,k) = t_data(1,k-1) + DTC;
-end
-
+% modus for simulation
 global modus tc
 modus_sel = {'stationary', '1meal', '3meals', 'sinus'};
 if (nargin == 0)
@@ -84,28 +72,37 @@ elseif (strcmp(modus, 'sinus'))
 end
 disp(modus)
 
-global f_liquid  f_solid  
-f_liquid = 0.2;                  % [0,1] liquid fraction of volume (sinusoids & Space of Disse)
-f_solid  = 0.7;                  % [0,1] solid fraction of volume (hepatocytes)
-
-C_glyc = 500;                    % [mmol/L] (90 mg/ml) glycogen storage density 
-C_glyc_solid = C_glyc/f_solid;   % [mmol/L] glycogen storage density in solid 
+% solid/liquid fractions and simulation volumes
+global f_liquid  f_solid V_sim
+f_liquid = 0.25;                  % [0,1] liquid fraction of volume (sinusoids & Space of Disse)
+f_solid  = 0.75;                  % [0,1] solid fraction of volume (hepatocytes)
+V_sim = 0.05;                     % [l] simulation volume (reference volume of model V_ref=1.0L
 
 % stationary initial conditions
+C_glyc = 500;                    % [mmol/L] (90 mg/ml) glycogen storage density 
 c_init = [
-                9                 % glc_ext   C1 [mmol/L]
-                0.5*C_glyc_solid  % glyc      C2 [mmol/L]
-                4                 % lac_ext   C3 [mmol/L] 
+                9                   % glc_ext   C1 [mmol/L] (glucose in fluid)
+                0.5*C_glyc/f_solid  % glyc      C2 [mmol/L] (glycogen in solid)
+                4                   % lac_ext   C3 [mmol/L] (lactate in fluid)
 ];
-% Set initial concentrations from profile
+% initial conditions for timecourse profiles
 if (strcmp(modus, '1meal') || strcmp(modus, '3meals') || strcmp(modus, 'sinus'))
     [glc, lac] = f_timecourse(0/3600, tc);
     c_init(1,:) = glc;  % [mM]
     c_init(3,:) = lac;  % [mM]
 end
 
+% time vector for integration
+% time steps change the accuracy of the solver, but should not change
+% the solutions as long as DCT is small compared to the kinetics
+DT =  20*60;       % [s] endtime
+DTC = 0.05;          % [s] size of time steps
+t_data = zeros(1, DT/DTC+1);
+for k = 2:length(t_data)
+    t_data(1,k) = t_data(1,k-1) + DTC;
+end
 
-% initial conditions of simulation volume
+% vectors to hold results
 NC = 3;  % number of concentrations
 c_data = zeros(NC, length(t_data));
 f_data = zeros(NC, length(t_data));
@@ -115,11 +112,13 @@ c_data(:,1) = c_init;
 %% Integration Euler
 display('-----------------')
 display('Time Matlab Euler')
-
 tic
 for k = 2:length(t_data)
     % get fluxes and concentrations for next time point
-    f_data(:,k) = mv_dxdt(t_data(k-1), c_data(:, k-1));   % [mmol/s/l]
+    % these are the changes within a reference volume of V=1.0L and 
+    % have to be scaled to account for the actual changes in the reference 
+    % volume
+    f_data(:,k) = mv_dxdt(t_data(k-1), c_data(:, k-1));  % [mmol/l/s]
 
     % glucose in fluid
     c_data(1,k) = c_data(1, k-1) + DTC *f_data(1,k);       % [mmol/l]  
@@ -145,7 +144,7 @@ end
 c_data(4,:) = c_data(2,:)*f_solid;  % [mM] glycogen concentration in reference volume [0, 500]
 
 % plot the results
-fig_name = strcat('MV9_Matlab_Euler-', modus)
+fig_name = strcat('MV', int2str(VERSION), '_Matlab_Euler-', modus)
 fig_integration(t_data, f_data, c_data, fig_name{1});
 
 return
