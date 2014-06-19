@@ -6,7 +6,7 @@ function [t_data, f_data, c_data] = mv_solve_ode(modus_index)
 % @author: Matthias Koenig (matthias.koenig[AT]charite.de)
 % @date:   2014-06-04
 
-VERSION = 11;
+VERSION = 12;
 
 global modus tc
 modus_sel = {'stationary', '1meal', '3meals', 'sinus'};
@@ -45,10 +45,11 @@ if (strcmp(modus, '1meal') || strcmp(modus, '3meals') || strcmp(modus, 'sinus'))
 end
 
 %% Integration
-DT = 60*3600;                  % [s] endtime simulation (DT)
+%DT = 60*3600;                  % [s] endtime simulation (DT)
+DT = 10;                  % [s] endtime simulation (DT)
                  
 options = odeset('AbsTol', 1E-6, 'RelTol', 1E-6);
-[t_data, c_data] = ode15s(@mv_dxdt, [0:60:DT], c_init, options);
+[t_data, c_data] = ode15s(@mv_dxdt, [0:10:DT], c_init, options);
 % tic
 % [t,c] = ode15s(@mv_dxdt, [0, 2000], c_init, odeset('RelTol', 1e-9, 'AbsTol', 1e-9));
 % toc

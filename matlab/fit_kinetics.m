@@ -1,8 +1,7 @@
-% Calculates the changes in glucose, lactate and glycogen for a
-% reference volume of 1L liver; 
-
-% All fluxes are at this point in [mmol/s] per 1L reference volume, 
-% i.e. [mmol/L/s]
+% Calculates the changes in glucose, lactate and glycogen. 
+% All fluxes are at this point in [mmol/s/L]. 
+% The fitted model calculated the fluxes in a reference volume of 1L with 
+% time units in minutes!
 
 function [f] = fit_kinetics()
     global f_solid  
@@ -37,6 +36,7 @@ function [f] = fit_kinetics()
         if (res > 0)
             res = res * x/(x + k_glc); 
         end
+        res = 1/60 * res;  % [fit curves in min] -> [s]
     end
 
     %GNG and GLY
@@ -59,6 +59,7 @@ function [f] = fit_kinetics()
         if (res > 0)
             res = res * x/(x + k_glc); 
         end
+        res = 1/60 * res;  % [fit curves in min] -> [s]
     end
 
     %GS
