@@ -6,7 +6,7 @@ function [t_data, f_data, c_data] = mv_solve_ode(modus_index)
 % @author: Matthias Koenig (matthias.koenig[AT]charite.de)
 % @date:   2014-06-04
 
-VERSION = 12;
+VERSION = 13;
 
 global modus tc
 modus_sel = {'stationary', '1meal', '3meals', 'sinus'};
@@ -32,7 +32,7 @@ V_sim = 0.05;                     % [L] simulation volume (reference volume of m
 % stationary initial conditions
 C_glyc = 500;                    % [mmol/L] (90 mg/ml) glycogen storage density 
 c_init = [
-                9                   % glc_ext   C1 [mmol/L]
+                3                   % glc_ext   C1 [mmol/L]
                 0.5*C_glyc/f_solid  % glyc      C2 [mmol/L]
                 4                   % lac_ext   C3 [mmol/L] 
 ];
@@ -45,8 +45,8 @@ if (strcmp(modus, '1meal') || strcmp(modus, '3meals') || strcmp(modus, 'sinus'))
 end
 
 %% Integration
-%DT = 60*3600;                  % [s] endtime simulation (DT)
-DT = 10;                  % [s] endtime simulation (DT)
+DT = 60*3600;                  % [s] endtime simulation (DT)
+% DT = 20*60;                  % [s] endtime simulation (DT)
                  
 options = odeset('AbsTol', 1E-6, 'RelTol', 1E-6);
 [t_data, c_data] = ode15s(@mv_dxdt, [0:10:DT], c_init, options);
