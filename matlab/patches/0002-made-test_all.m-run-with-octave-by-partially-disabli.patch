@@ -1,0 +1,114 @@
+From 9eb0cc166907e7700ecc317f885346565144554e Mon Sep 17 00:00:00 2001
+From: Ole Schwen <ole.schwen@mevis.fraunhofer.de>
+Date: Fri, 20 Jun 2014 13:43:20 +0200
+Subject: [PATCH 2/3] made test_all.m run with octave (by partially disabling
+ console/csv output)
+
+---
+ matlab/mv_solve_euler.m | 38 +++++++++++++++++++-------------------
+ 1 file changed, 19 insertions(+), 19 deletions(-)
+
+diff --git a/matlab/mv_solve_euler.m b/matlab/mv_solve_euler.m
+index 02e9f3e..27e1ae6 100644
+--- a/matlab/mv_solve_euler.m
++++ b/matlab/mv_solve_euler.m
+@@ -1,17 +1,17 @@
+ function [t_data, f_data, c_data] = mv_solve_euler(modus_index)
+ %  mv_solve_euler : Solves the reduced model in Matlab with Euler method.
+ %
+-%  Model : Reduced Model of Hepatic Glucose Metabolism 
++%  Model : Reduced Model of Hepatic Glucose Metabolism
+ %  @author: Matthias Koenig (matthias.koenig[AT]charite.de)
+ %  @date:   2013-07-18
+ %
+ %     Koenig M., Bulik S. and Holzhuetter HG.
+-%     Quantifying the Contribution of the Liver to the Homeostasis of Plasma 
+-%     Glucose: A Detailed Kinetic Model of Hepatic Glucose Metabolism 
++%     Quantifying the Contribution of the Liver to the Homeostasis of Plasma
++%     Glucose: A Detailed Kinetic Model of Hepatic Glucose Metabolism
+ %     PLoS Comput Biol. 2012 Jun;8(6):e1002577. Epub 2012 Jun 21.
+ %
+ % Model reduction based on Quasi-Steady-State approximation of full kinetic
+-% model with 
++% model with
+ %     c1 -> glc_ext (blood glucose) [mmol/L]
+ %     c2 -> glyc    (hepatic glycogen) [mmol/L]
+ %     c3 -> lac_ext (blood lactate) [mmol/L]
+@@ -22,7 +22,7 @@ function [t_data, f_data, c_data] = mv_solve_euler(modus_index)
+ %                 GLY < 0 (gluconeogenesis)
+ %     v1 -> GS  : GS  > 0 (glycogen synthesis)
+ %                 GS  < 0 (glycogenolysis)
+-% 
++%
+ % Glycogen values are always between [0, 500] mM in full model
+ % corresponding to [0, 500]*VL/VSIM in simulation volume V_sim.
+ 
+@@ -38,16 +38,16 @@ function [t_data, f_data, c_data] = mv_solve_euler(modus_index)
+ % expected result: in Phase 1 with low glucose, glucose is produced by
+ %                   the liver via gluconeogenesis and from glycogen stores.
+ %                   Glycogen is degraded in this phase.
+-%           
+-% 2. Complete filling of glycogen stores 
+-%    set in [t0, t1) -> glc_ext = 9mM; lac_ext = 3mM; glycogen(t0) = 0  
+ %
+-% 3. Complete emptying of glycogen stores 
+-%    set in [t0, t1) -> glc_ext = 3.5mM; lac_ext = 3mM; glycogen(t0) = min  
++% 2. Complete filling of glycogen stores
++%    set in [t0, t1) -> glc_ext = 9mM; lac_ext = 3mM; glycogen(t0) = 0
++%
++% 3. Complete emptying of glycogen stores
++%    set in [t0, t1) -> glc_ext = 3.5mM; lac_ext = 3mM; glycogen(t0) = min
+ %
+-% 4. Complete filling of glycogen stores 
++% 4. Complete filling of glycogen stores
+ %    set in [t0, t1) -> glc_ext = 9mM; lac_ext = 3mM; glycogen(t0) = max
+-% 
++%
+ % 5. Dynamic daily glucose profiles (1 meal & 3 meal)
+ % results: analog to the hard switch in Simulation 1, but more dynamic
+ %           behavior
+@@ -61,7 +61,7 @@ modus_sel = {'stationary', '1meal', '3meals', 'sinus'};
+ if (nargin == 0)
+     modus = modus_sel(1);
+ else
+-   modus = modus_sel(modus_index); 
++   modus = modus_sel(modus_index);
+ end
+ if (strcmp(modus, '1meal'))
+     tc = timecourse_1meal();
+@@ -79,7 +79,7 @@ f_solid  = 0.75;                  % [0,1] solid fraction of volume (hepatocytes)
+ V_sim = 0.05;                     % [l] simulation volume (reference volume of model V_ref=1.0L
+ 
+ % stationary initial conditions
+-C_glyc = 500;                    % [mmol/L] (90 mg/ml) glycogen storage density 
++C_glyc = 500;                    % [mmol/L] (90 mg/ml) glycogen storage density
+ c_init = [
+                 9                   % glc_ext   C1 [mmol/L] (glucose in fluid)
+                 0.5*C_glyc/f_solid  % glyc      C2 [mmol/L] (glycogen in solid)
+@@ -110,18 +110,18 @@ t_data(1,1) = 0;
+ c_data(:,1) = c_init;
+ 
+ %% Integration Euler
+-display('-----------------')
+-display('Time Matlab Euler')
++%display('-----------------')
++%display('Time Matlab Euler')
+ tic
+ for k = 2:length(t_data)
+     % get fluxes and concentrations for next time point
+-    % these are the changes within a reference volume of V=1.0L and 
+-    % have to be scaled to account for the actual changes in the reference 
++    % these are the changes within a reference volume of V=1.0L and
++    % have to be scaled to account for the actual changes in the reference
+     % volume
+     f_data(:,k) = mv_dxdt(t_data(k-1), c_data(:, k-1));  % [mmol/l/s]
+ 
+     % glucose in fluid
+-    c_data(1,k) = c_data(1, k-1) + DTC *f_data(1,k);       % [mmol/l]  
++    c_data(1,k) = c_data(1, k-1) + DTC *f_data(1,k);       % [mmol/l]
+     % glycogen in solid
+     c_data(2,k) = c_data(2, k-1) + DTC *f_data(2,k);       % [mmol/l]
+     % lactate in fluid
+-- 
+2.0.0
+

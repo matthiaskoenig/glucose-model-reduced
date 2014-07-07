@@ -3,9 +3,13 @@
 % The fitted model calculated the fluxes in a reference volume of 1L with 
 % time units in minutes!
 
-function [f] = fit_kinetics()
+function [f] = fit_kinetics_flow()
     global f_solid 
- 
+    
+    kfit_1 = 0.7;  % amount of correction
+    kfit_2 = 7.0;  % midpoint for correction
+    kfit_3 = 0.7;  % total correction
+    
     f.hgu = @hgu;
     f.gly = @gly;
     f.gs  = @gs;
@@ -19,6 +23,7 @@ function [f] = fit_kinetics()
     function [res] = hgu(x, y, z)   % [mmole/s/L]
         % The glycogen storage capacity depends on Vf and the glycogen
         % variable has to be transformed accordingly -> [0,500]
+        x =  max(0.0, x + kfit_1*(x - kfit_2));
         
         y = y*f_solid; 
         C = [   0.002037960420379  -0.000367490977632  -0.069301032419012  ... 
@@ -38,12 +43,17 @@ function [f] = fit_kinetics()
             res = res * x/(x + k_glc); 
         end
         res = 1/60 * res;  % [fit curves in min] -> [s]
+        
+        % adaption for flow (calculated via fit)
+        res = kfit_3 * res;
     end
 
     %GNG and GLY
     function [res] = gly(x, y, z)  % [mmole/s/L]
         % The glycogen storage capacity depends on Vf and the glycogen
-        % variable has to be transformed accordingly; 
+        % variable has to be transformed accordingly;
+        x =  max(0.0, x + kfit_1*(x - kfit_2));
+        
         y = y*f_solid; 
         C = [  -0.013260401508103  -0.000078240970095   0.478235644004833  ...
                 0.000002861605817   0.000932752106971  -2.492569641130055  ...
@@ -61,6 +71,8 @@ function [f] = fit_kinetics()
             res = res * x/(x + k_glc); 
         end
         res = 1/60 * res;  % [fit curves in min] -> [s]
+        % adaption for flow (calculated via fit)
+        res = kfit_3 * res;
     end
 
     %GS

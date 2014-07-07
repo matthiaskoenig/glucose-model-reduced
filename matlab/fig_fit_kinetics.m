@@ -7,6 +7,9 @@
 clear all, format compact
 fprintf('Reduced Glucose Model Response\n');
 
+global alpha
+alpha = 1.0
+
 global f_solid
 f_solid = 1.0;
 

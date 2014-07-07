@@ -29,6 +29,9 @@ f_liquid = 0.25;                  % [0,1] liquid fraction of volume (sinusoids &
 f_solid  = 0.75;                  % [0,1] solid fraction of volume (hepatocytes)
 V_sim = 0.05;                     % [L] simulation volume (reference volume of model V_ref=1.0L
 
+global alpha
+alpha = 1.0;                       % no adaption of fit kinetics for flow
+
 % stationary initial conditions
 C_glyc = 500;                    % [mmol/L] (90 mg/ml) glycogen storage density 
 c_init = [

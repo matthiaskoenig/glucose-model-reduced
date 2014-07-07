@@ -1,0 +1,377 @@
+From 6215016169e62706f882e63d700a682aa4c2f497 Mon Sep 17 00:00:00 2001
+From: Ole Schwen <ole.schwen@mevis.fraunhofer.de>
+Date: Fri, 20 Jun 2014 13:42:59 +0200
+Subject: [PATCH 1/3] modifications to make code run with octave (merged
+ earlier changes, untested)
+
+---
+ matlab/f_timecourse.m     |  6 +++---
+ matlab/fig_fit_kinetics.m |  9 ++++++---
+ matlab/fig_integration.m  | 10 +++++-----
+ matlab/fig_timecourses.m  |  4 ++--
+ matlab/fit_kinetics.m     | 42 +++++++++++++++++++++++++-----------------
+ matlab/mv_dxdt.m          | 19 ++++++++-----------
+ matlab/mv_dxdt_2.m        |  3 +++
+ matlab/mv_solve_ode.m     | 32 ++++++++++++++++++++------------
+ matlab/test_all.m         |  1 -
+ 9 files changed, 72 insertions(+), 54 deletions(-)
+ create mode 100644 matlab/mv_dxdt_2.m
+
+diff --git a/matlab/f_timecourse.m b/matlab/f_timecourse.m
+index d6f5cc9..2c8f2c2 100644
+--- a/matlab/f_timecourse.m
++++ b/matlab/f_timecourse.m
+@@ -1,5 +1,5 @@
+-% Get values of the interpolated timecourse profile 
+-% for the given timepoints. 
++% Get values of the interpolated timecourse profile
++% for the given timepoints.
+ % Points for interpolation are given as struct tc.
+ % Uses linear interpolation with timepoints for queries in [h].
+ % Timecourses are periodic with T=24h.
+@@ -12,4 +12,4 @@ function [glc, lac] = f_timecourse(timepoints, tc)
+     timepoints = mod(timepoints, 24);
+     glc = interp1(tc.time, tc.glc, timepoints, 'linear');
+     lac = interp1(tc.time, tc.lac, timepoints, 'linear');
+-end
+\ No newline at end of file
++end
+diff --git a/matlab/fig_fit_kinetics.m b/matlab/fig_fit_kinetics.m
+index 15730bb..01606dc 100644
+--- a/matlab/fig_fit_kinetics.m
++++ b/matlab/fig_fit_kinetics.m
+@@ -14,11 +14,11 @@ f = fit_kinetics();
+ x1 = 0:0.5:12;   % [mM] glc_ext
+ x2 = 0:10:500;   % [mM] glycogen
+ x3 = 0:0.1:4;    % [mM] lac_ext
+-Nglc = numel(x1); 
+-Ngly = numel(x2); 
++Nglc = numel(x1);
++Ngly = numel(x2);
+ Nlac = numel(x3);
+ 
+-% Precalculate all the values for the plot 
++% Precalculate all the values for the plot
+ hgu = zeros(Nglc, Ngly, Nlac);
+ gly = zeros(Nglc, Ngly, Nlac);
+ gs = zeros(Nglc, Ngly, Nlac);
+@@ -75,3 +75,6 @@ for k=1:9
+    ylabel('glyc', 'FontWeight', 'bold')
+    axis square
+ end
++
++% save the figure
++print(figure, '../results/fit_kinetics.png', '-dpng')
+diff --git a/matlab/fig_integration.m b/matlab/fig_integration.m
+index 3f9a449..76c841d 100644
+--- a/matlab/fig_integration.m
++++ b/matlab/fig_integration.m
+@@ -1,6 +1,6 @@
+ function [y] = fig_integration(t, f, c, ftext)
+ % plot details about the solution
+-fig1 = figure('Name', ftext, 'Color', [1 1 1], 'OuterPosition', [0 0 1200 800])
++fig1 = figure('Name', ftext, 'Color', [1 1 1])
+ t_unit = 'min'
+ switch t_unit
+     case 's'
+@@ -16,7 +16,7 @@ Nc = size(f,1);
+ % plot the concentrations
+ for k=1:Nc
+     subplot(2,Nc,k)
+-    data = c(k,:);    
++    data = c(k,:);
+     plot(t, data); hold on;
+     switch k
+         case 1
+@@ -32,12 +32,12 @@ for k=1:Nc
+ end
+ % plot the additional concentrations in the plot
+ subplot(2,3,2)
+-plot(t, c(4,:), 'k-'), hold on; 
++plot(t, c(4,:), 'k-'), hold on;
+ 
+ % plot the fdata
+ for k=1:Nc
+     subplot(2,Nc,Nc+k)
+-    data = f(k,:);    
++    data = f(k,:);
+     plot(t, data);
+     switch k
+         case 1
+@@ -54,4 +54,4 @@ end
+ 
+ % save the figure
+ fig_name = strcat('../results/', ftext, '.png')
+-print(fig1, fig_name, '-dpng')
+\ No newline at end of file
++print(fig1, fig_name, '-dpng')
+diff --git a/matlab/fig_timecourses.m b/matlab/fig_timecourses.m
+index 4b91af8..48ebf5b 100644
+--- a/matlab/fig_timecourses.m
++++ b/matlab/fig_timecourses.m
+@@ -6,7 +6,7 @@ clear all
+ addpath('../glucose-profiles/')
+ 
+ disp('*** Load data ***')
+-tcs = {timecourse_1meal(), timecourse_3meals(), timecourse_sinus()};
++global tcs = {timecourse_1meal(), timecourse_3meals(), timecourse_sinus()};
+ names = {'1 Meal', '3 Meals', 'Sinus'}
+ 
+ disp('*** Plot data ***')
+@@ -39,4 +39,4 @@ for k=1:numel(tcs)
+ end
+ 
+ % save the figure
+-print(fig1, '../results/timecourse_profiles.png', '-dpng')
+\ No newline at end of file
++print(fig1, '../results/timecourse_profiles.png', '-dpng')
+diff --git a/matlab/fit_kinetics.m b/matlab/fit_kinetics.m
+index 1502e0f..bc3eb1f 100644
+--- a/matlab/fit_kinetics.m
++++ b/matlab/fit_kinetics.m
+@@ -1,63 +1,71 @@
+-% Calculates the changes in glucose, lactate and glycogen. 
+-% All fluxes are at this point in [mmol/s/L]. 
+-% The fitted model calculated the fluxes in a reference volume of 1L with 
++% Calculates the changes in glucose, lactate and glycogen.
++% All fluxes are at this point in [mmol/s/L].
++% The fitted model calculated the fluxes in a reference volume of 1L with
+ % time units in minutes!
+ 
+ function [f] = fit_kinetics()
+-    global f_solid  
+-    
++    global f_solid
++
+     f.hgu = @hgu;
+     f.gly = @gly;
+     f.gs  = @gs;
+-    
++
+     % lac_ext becomes limiting for HGP, GS and GNG at low concentrations
++    global k_lac;
++    global k_glc;
+     k_lac = 0.05;   % [mM]
+     k_glc = 0.05;   % [mM]
+-    
++
+     % x (glc_ext), y (glycogen), z (lac_ext)
+     % HGU (>0) and HGP (<0)
+     function [res] = hgu(x, y, z)   % [mmole/s/L]
++        global f_solid;
++        global k_lac;
++        global k_glc;
+         % The glycogen storage capacity depends on Vf and the glycogen
+         % variable has to be transformed accordingly -> [0,500]
+-        y = y*f_solid; 
+-        C = [   0.002037960420379  -0.000367490977632  -0.069301032419012  ... 
++        y = y*f_solid;
++        C = [   0.002037960420379  -0.000367490977632  -0.069301032419012  ...
+                -0.000002823120484   0.011282864074433   3.740276159346358  ...
+                -0.000000181515364   0.000157328485157   -0.100050917438436 ...
+                -18.414978834613287];
+-           
++
+         % kinetics depends mainly on glc_ext and glycogen_ext
+         res = C(1)*x^3 + C(2)*x^2*y + C(3)*x^2 + C(4)*x*y^2 + C(5)*x*y ...
+             +C(6)*x + C(7)*y^3 + C(8)*y^2 + C(9)*y + C(10);
+         % HGP limited by lactate
+         if (res < 0)
+-            res = res * z/(z + k_lac); 
++            res = res * z/(z + k_lac);
+         end
+         % HGU limited by glc
+         if (res > 0)
+-            res = res * x/(x + k_glc); 
++            res = res * x/(x + k_glc);
+         end
+         res = 1/60 * res;  % [fit curves in min] -> [s]
+     end
+ 
+     %GNG and GLY
+     function [res] = gly(x, y, z)  % [mmole/s/L]
++        global f_solid;
++        global k_lac;
++        global k_glc;
+         % The glycogen storage capacity depends on Vf and the glycogen
+         % variable has to be transformed accordingly;
+-        y = y*f_solid; 
++        y = y*f_solid;
+         C = [  -0.013260401508103  -0.000078240970095   0.478235644004833  ...
+                 0.000002861605817   0.000932752106971  -2.492569641130055  ...
+                 0.000000166945924  -0.000125285017396   0.015354944655784  ...
+                -4.975026288067225];
+         res = C(1)*x^3 + C(2)*x^2*y + C(3)*x^2 + C(4)*x*y^2 + C(5)*x*y ...
+             +C(6)*x + C(7)*y^3 + C(8)*y^2 + C(9)*y + C(10);
+-        
++
+         % GNG limited by lactate
+         if (res < 0)
+-            res = res * z/(z + k_lac); 
++            res = res * z/(z + k_lac);
+         end
+         % GLY limited by glc
+         if (res > 0)
+-            res = res * x/(x + k_glc); 
++            res = res * x/(x + k_glc);
+         end
+         res = 1/60 * res;  % [fit curves in min] -> [s]
+     end
+@@ -66,4 +74,4 @@ function [f] = fit_kinetics()
+     function [res] = gs(x, y, z)
+         res = hgu(x,y,z)-gly(x, y, z);
+     end
+-end
+\ No newline at end of file
++end
+diff --git a/matlab/mv_dxdt.m b/matlab/mv_dxdt.m
+index 37634e9..de31921 100644
+--- a/matlab/mv_dxdt.m
++++ b/matlab/mv_dxdt.m
+@@ -3,17 +3,17 @@ function [dxdt] = mv_dxdt(t, x)
+ %  Definition of the rate laws and calculation of the fluxes for the given
+ %  parameters and concentrations. This function is called by the ODE
+ %  integration routine.
+-%  
++%
+ %   dxdt                vector of fluxes (changes in ODE)
+ %   c                   vector of concentrations
+ 
+ % Units
+-%   time: seconds     [sec] ,  
+-%   concentration     [mM] = [mmol/l] 
++%   time: seconds     [sec] ,
++%   concentration     [mM] = [mmol/l]
+ %   volume:           [litre]
+ %   dxdt:             [mmol/s/litre]
+ %
+-%   author: Matthias Koenig 
++%   author: Matthias Koenig
+ %           Charite Berlin
+ %           Computational Systems Biochemistry Berlin
+ %           matthias.koenig@charite.de
+@@ -38,16 +38,13 @@ gs = f.gs(x(1), x(2), x(3));
+ 
+ % Changes are relative to the respective volumes
+ % hgu, gs, gly are [mmol/s/L] simulation Volume
+-% the changes in the liquid and solid volumes are calculated with the 
++% the changes in the liquid and solid volumes are calculated with the
+ % respective fractions
+ dxdt = zeros(size(x));
+-dxdt(1) = -1 * hgu/f_liquid; % [mmol/s/L] 
+-dxdt(2) = +1 * gs/f_solid;   % [mmol/s/L]                  
++dxdt(1) = -1 * hgu/f_liquid; % [mmol/s/L]
++dxdt(2) = +1 * gs/f_solid;   % [mmol/s/L]
+ dxdt(3) = +2 * gly/f_liquid; % [mmol/s/L]
+ 
+-
+ % test with constant glucose and lactate concentrations (liquid)
+-%dxdt(1) = 0;                
++%dxdt(1) = 0;
+ %dxdt(3) = 0;
+-
+-
+diff --git a/matlab/mv_dxdt_2.m b/matlab/mv_dxdt_2.m
+new file mode 100644
+index 0000000..56a37fd
+--- /dev/null
++++ b/matlab/mv_dxdt_2.m
+@@ -0,0 +1,3 @@
++function [dxdt] = mv_dxdt_2(x, t)
++  dxdt = mv_dxdt(t,x);
++end
+diff --git a/matlab/mv_solve_ode.m b/matlab/mv_solve_ode.m
+index 5d9e1c1..8214ddc 100644
+--- a/matlab/mv_solve_ode.m
++++ b/matlab/mv_solve_ode.m
+@@ -1,4 +1,5 @@
+ function [t_data, f_data, c_data] = mv_solve_ode(modus_index)
++
+ % mv_solve_ode : Solves the reduced model with ODE solver.
+ % See mv_solve_euler for the solution by Euler method and desripton
+ % of model, variables and parameters.
+@@ -9,11 +10,12 @@ function [t_data, f_data, c_data] = mv_solve_ode(modus_index)
+ VERSION = 12;
+ 
+ global modus tc
++
+ modus_sel = {'stationary', '1meal', '3meals', 'sinus'};
+ if (nargin == 0)
+     modus = modus_sel(1);
+ else
+-   modus = modus_sel(modus_index); 
++   modus = modus_sel(modus_index);
+ end
+ if (strcmp(modus, '1meal'))
+     tc = timecourse_1meal();
+@@ -30,11 +32,11 @@ f_solid  = 0.75;                  % [0,1] solid fraction of volume (hepatocytes)
+ V_sim = 0.05;                     % [L] simulation volume (reference volume of model V_ref=1.0L
+ 
+ % stationary initial conditions
+-C_glyc = 500;                    % [mmol/L] (90 mg/ml) glycogen storage density 
++C_glyc = 500;                    % [mmol/L] (90 mg/ml) glycogen storage density
+ c_init = [
+                 9                   % glc_ext   C1 [mmol/L]
+                 0.5*C_glyc/f_solid  % glyc      C2 [mmol/L]
+-                4                   % lac_ext   C3 [mmol/L] 
++                4                   % lac_ext   C3 [mmol/L]
+ ];
+ 
+ % initial conditions for timecourse profiles
+@@ -47,14 +49,18 @@ end
+ %% Integration
+ %DT = 60*3600;                  % [s] endtime simulation (DT)
+ DT = 10;                  % [s] endtime simulation (DT)
+-                 
+-options = odeset('AbsTol', 1E-6, 'RelTol', 1E-6);
+-[t_data, c_data] = ode15s(@mv_dxdt, [0:10:DT], c_init, options);
++
++%options = odeset('AbsTol', 1E-6, 'RelTol', 1E-6);
++%[t_data, c_data] = ode15s(@mv_dxdt, [0:10:DT], c_init, options);
+ % tic
+ % [t,c] = ode15s(@mv_dxdt, [0, 2000], c_init, odeset('RelTol', 1e-9, 'AbsTol', 1e-9));
+ % toc
++t_data = [0:10:DT];
++
++c_data = lsode ( @mv_dxdt_2, c_init, t_data );
++
+ c_data = c_data';
+-f_data = zeros(size(c_data)); 
++f_data = zeros(size(c_data));
+ 
+ % Set the concentrations from profile
+ if (strcmp(modus, '1meal') || strcmp(modus, '3meals') || strcmp(modus, 'sinus'))
+@@ -71,13 +77,15 @@ end
+ c_data(4,:) = c_data(2,:)*f_solid;  % [mM] glycogen concentration in reference volume [0, 500]
+ 
+ %% store the results
+-headers = {'time', 'glc', 'gly', 'lac', 'gly_vol', 'f_glc', 'f_gly', 'f_lac'} 
+-res =[t_data, c_data', f_data'];
+-fname = strcat('../results/','MV', int2str(VERSION), '_Matlab_ODE-', modus, '.csv')
+-csvwrite_with_headers(fname{1}, res, headers);
++%headers = {'time', 'glc', 'gly', 'lac', 'gly_vol', 'f_glc', 'f_gly', 'f_lac'}
++%res =[t_data, c_data', f_data'];
++%fname = strcat('../results/','MV', int2str(VERSION), '_Matlab_ODE-', modus, '.csv')
++%csvwrite_with_headers(fname{1}, res, headers);
++
++% FIXME: csv output with octave
+ 
+ %% plot the results
+ fig_name = strcat('MV', int2str(VERSION), '_Matlab_ODE-', modus)
+ fig_integration(t_data, f_data, c_data, fig_name{1});
+ 
+-end
+\ No newline at end of file
++end
+diff --git a/matlab/test_all.m b/matlab/test_all.m
+index f42744e..85026c9 100644
+--- a/matlab/test_all.m
++++ b/matlab/test_all.m
+@@ -17,4 +17,3 @@ mv_solve_ode(4) % sinus
+ 
+ % [5] timecourse integration with euler
+ mv_solve_euler(1) % stationary
+-
+-- 
+2.0.0
+

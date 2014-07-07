@@ -18,3 +18,7 @@ mv_solve_ode(4) % sinus
 % [5] timecourse integration with euler
 mv_solve_euler(1) % stationary
 
+% [6] solve with flow
+mv_solve_flow(2) % 1 meal
+mv_solve_flow(3) % 3 meals
+
