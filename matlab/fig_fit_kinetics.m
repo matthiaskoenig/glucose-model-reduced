@@ -7,13 +7,12 @@
 clear all, format compact
 fprintf('Reduced Glucose Model Response\n');
 
-global alpha
-alpha = 1.0
-
 global f_solid
 f_solid = 1.0;
 
 f = fit_kinetics();
+%f = fit_kinetics_flow();
+
 x1 = 0:0.5:12;   % [mM] glc_ext
 x2 = 0:10:500;   % [mM] glycogen
 x3 = 0:0.1:4;    % [mM] lac_ext

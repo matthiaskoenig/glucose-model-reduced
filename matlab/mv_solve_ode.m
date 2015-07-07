@@ -6,7 +6,7 @@ function [t_data, f_data, c_data] = mv_solve_ode(modus_index)
 % @author: Matthias Koenig (matthias.koenig[AT]charite.de)
 % @date:   2014-06-04
 
-VERSION = 13;
+VERSION = '15';
 
 global modus tc
 modus_sel = {'stationary', '1meal', '3meals', 'sinus'};
@@ -76,11 +76,11 @@ c_data(4,:) = c_data(2,:)*f_solid;  % [mM] glycogen concentration in reference v
 %% store the results
 headers = {'time', 'glc', 'gly', 'lac', 'gly_vol', 'f_glc', 'f_gly', 'f_lac'} 
 res =[t_data, c_data', f_data'];
-fname = strcat('../results/','MV', int2str(VERSION), '_Matlab_ODE-', modus, '.csv')
+fname = strcat('../results/','MV', VERSION, '_Matlab_ODE-', modus, '.csv')
 csvwrite_with_headers(fname{1}, res, headers);
 
 %% plot the results
-fig_name = strcat('MV', int2str(VERSION), '_Matlab_ODE-', modus)
+fig_name = strcat('../results/', 'MV', VERSION, '_Matlab_ODE-', modus)
 fig_integration(t_data, f_data, c_data, fig_name{1});
 
 end

@@ -53,5 +53,5 @@ for k=1:Nc
 end
 
 % save the figure
-fig_name = strcat('../results/', ftext, '.png')
+fig_name = strcat(ftext, '.png')
 print(fig1, fig_name, '-dpng')

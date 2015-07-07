@@ -6,7 +6,7 @@ function [t_data, f_data, c_data] = mv_solve_flow(modus_index)
 % @author: Matthias Koenig (matthias.koenig[AT]charite.de)
 % @date:   2014-07-07
 
-VERSION = 14;
+VERSION = '15_flow';
 addpath('../glucose-profiles/')
 
 global modus tc
@@ -55,8 +55,8 @@ DT = 60*3600;             % [s] endtime simulation (DT)
 
                  
 options = odeset('AbsTol', 1E-6, 'RelTol', 1E-6);
-%[t_data, c_data] = ode15s(@mv_dxdt_flow, [0:60:DT], c_init, options);
-[t_data, c_data] = ode15s(@mv_dxdt_flow, [0, DT], c_init, options);
+%[t_data, c_data] = ode15s(@mv_dxdt_flow, [0, DT], c_init, options);
+[t_data, c_data] = ode15s(@mv_dxdt_flow, [0:60:DT], c_init, options);
 
 c_data = c_data';
 f_data = zeros(size(c_data)); 
@@ -81,11 +81,11 @@ if (1)
 headers = {'time', 'glc_pp', 'lac_pp', 'glc', 'lac', 'gly', 'gly_vol', ...
                  'f_glc_pp', 'f_lac_pp', 'f_glc', 'f_lac', 'f_gly'} 
 res =[t_data, c_data', f_data'];
-fname = strcat('MV', int2str(VERSION), '_Matlab_ODE-', modus, '.csv')
+fname = strcat('../results/', 'MV', VERSION, '_Matlab_ODE-', modus, '.csv')
 csvwrite_with_headers(fname{1}, res, headers);
 
 %% plot the results
-fig_name = strcat('MV', int2str(VERSION), '_Matlab_ODE-', modus)
+fig_name = strcat('../results/', 'MV', VERSION, '_Matlab_ODE-', modus)
 fig_integration_flow(t_data, f_data, c_data, fig_name{1});
 
 end

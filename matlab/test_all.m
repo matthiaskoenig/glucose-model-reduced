@@ -21,4 +21,5 @@ mv_solve_euler(1) % stationary
 % [6] solve with flow
 mv_solve_flow(2) % 1 meal
 mv_solve_flow(3) % 3 meals
+mv_solve_flow(4) % sinus
 
